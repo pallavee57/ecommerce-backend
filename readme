@@ -2,3 +2,4 @@ https://www.geeksforgeeks.org/complete-roadmap-to-learn-system-design/?ref=ghm
 https://www.geeksforgeeks.org/message-queues-system-design/
 https://www.geeksforgeeks.org/caching-system-design-concept-for-beginners/
 https://alpha2phi.medium.com/apache-pulsar-development-setup-bbdc82314cf
+docker run -it -p 6650:6650 -p 8080:8080 apachepulsar/pulsar:latest bin/pulsar standalone
