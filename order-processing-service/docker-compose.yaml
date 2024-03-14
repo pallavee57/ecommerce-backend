@@ -1,0 +1,118 @@
+version: "3"
+services:
+  order-processing-service:
+    build: .
+    image: logify:latest
+    container_name: logify
+    command: gunicorn orders.wsgi --bind 0.0.0.0:8002
+    environment:
+      - FORCE_SCRIPT_NAME=/orders
+      - STATIC_ROOT=/var/www/static
+      - PG_NAME=django
+      - PG_PASSWORD='django'
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - 8002:8002 
+    volumes:   
+      - ./orders/static_in_env:/code/static  
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  # prometheus:
+  #   image: prom/prometheus:v2.21.0
+  #   ports:
+  #     - 9090:9090
+  #   volumes:
+  #     - ./prometheus:/etc/prometheus
+  #     - prometheus-data:/prometheus
+  #   command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
+
+  # grafana:
+  #   image: grafana/grafana:7.5.7
+  #   ports:
+  #     - 3000:3000
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+  #     - grafana-data:/var/lib/grafana  
+       
+  # filebeat:
+  #   image: docker.elastic.co/beats/filebeat:7.16.2
+  #   user: root
+  #   volumes:
+  #     - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:rw
+  #     - /code/logs:/var/log/app/:ro
+  #     - /var/lib/docker:/var/lib/docker:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   command: bash -c "chmod  go-w /usr/share/filebeat/filebeat.yml && filebeat -e" 
+  #   depends_on:
+  #     - order-processing-service
+  #   networks:
+  #     - test
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:7.16.2
+  #   environment:
+  #     - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+  #     - "discovery.type=single-node"
+  #     - "xpack.security.enabled=false"
+
+  #   volumes:
+  #       - elasticsearch_data:/usr/share/elasticsearch/data
+  #   ports:
+  #     - "9200:9200"
+  #     - "9300:9300"
+  #   networks:
+  #     - test
+  #   restart: on-failure
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #     nofile:
+  #       soft: 65536
+  #       hard: 65536
+
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:7.16.2
+  #   ports:
+  #     - "5601:5601" 
+  #   depends_on:
+  #     - elasticsearch
+  #   environment:
+  #     - "xpack.security.authc.http.enabled=false"
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #   networks:
+  #     - test
+  pulsar:
+    image: apachepulsar/pulsar:latest
+    command: bin/pulsar standalone
+    hostname: pulsar
+    container_name: pulsar
+    ports:
+      - "8080:8080"
+      - "6650:6650"
+    restart: always
+    volumes:
+      - "./data:/pulsar/data"
+  dashboard:
+    image: apachepulsar/pulsar-manager:latest
+    ports:
+      - "9527:9527"
+      - "7750:7750"
+    container_name: dashboard
+    depends_on:
+      - pulsar
+    links:
+      - pulsar
+    environment:
+      SPRING_CONFIGURATION_FILE: /pulsar-manager/pulsar-manager/application.properties
+    
+volumes:
+ app_logs:
+ elasticsearch_data:
+ prometheus-data:
+ grafana-data:
+
+networks:
+  test:
+    driver: bridge
+ 

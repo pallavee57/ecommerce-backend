@@ -1,0 +1,1 @@
+ALTER TABLE order_processing.test_tablle ALTER COLUMN test_col TYPE int8 USING test_col::int8;

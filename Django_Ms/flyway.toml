@@ -1,0 +1,33 @@
+databaseType = "PostgreSql"
+id = "0a457aa2-5a87-4194-9dbd-4b76d07e40df"
+name = "Django_Ms"
+
+[flyway]
+locations = [ "filesystem:migrations" ]
+mixed = true
+outOfOrder = true
+validateMigrationNaming = true
+
+  [flyway.check]
+  majorTolerance = 0
+
+[flywayDesktop]
+developmentEnvironment = "development"
+schemaModel = "schema-model"
+shadowEnvironment = "shadow"
+
+[redgateCompare]
+filterFile = "filter.rgf"
+
+[redgateCompare.postgresql.options.ignores]
+ignoreNewlinesInTextObjects = "off"
+
+[environments.target1]
+url = "jdbc:postgresql://localhost/django-ms"
+user = "postgres"
+schemas = [
+  "user_management",
+  "product_management",
+  "order_management",
+  "payment_management"
+]

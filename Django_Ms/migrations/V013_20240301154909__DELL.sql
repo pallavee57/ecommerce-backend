@@ -1,0 +1,1 @@
+ALTER TABLE user_management.users ALTER COLUMN phone TYPE numeric USING phone::numeric;

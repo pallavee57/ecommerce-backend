@@ -1,0 +1,13 @@
+Django
+djangorestframework
+djangorestframework-simplejwt
+markdown
+gunicorn
+psycopg2-binary
+urllib3
+django-cors-headers
+razorpay
+django-cprofile-middleware
+django-silk
+django_prometheus
+pulsar-client

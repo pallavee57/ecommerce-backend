@@ -1,0 +1,9 @@
+Django
+djangorestframework
+djangorestframework-simplejwt
+markdown
+gunicorn
+psycopg2-binary
+razorpay
+django-cors-headers
+pulsar-client

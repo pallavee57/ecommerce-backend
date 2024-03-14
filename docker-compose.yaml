@@ -1,0 +1,83 @@
+version: "3.9"
+
+volumes:
+  static:
+
+services:
+  # auth-service:
+  #   build: ./auth-service
+  #   command: gunicorn authservice.wsgi --bind 0.0.0.0:8000
+  #   environment:
+  #     - FORCE_SCRIPT_NAME=/auth
+  #     - STATIC_ROOT=/var/www/static
+  #     - PG_NAME=django
+  #     - PG_PASSWORD='django'
+  #     - POSTGRES_HOST_AUTH_METHOD=trust
+  #   volumes:
+  #     - static:/var/www/static
+  #   ports:
+  #     - 8000:8000   
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+
+  order-processing-service:
+    build: ./order-processing-service
+    command: gunicorn orders.wsgi --bind 0.0.0.0:8002
+    environment:
+      - FORCE_SCRIPT_NAME=/orders
+      - STATIC_ROOT=/var/www/static
+      - PG_NAME=django
+      - PG_PASSWORD='django'
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - 8002:8002  
+    # networks:
+    #   - pulsar  
+    volumes:
+      - static:/var/www/static
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  payment-processing-service:
+      build: ./payment-processing-service
+      command: gunicorn payments.wsgi --bind 0.0.0.0:8001
+      environment:
+        - FORCE_SCRIPT_NAME=/payments
+        - STATIC_ROOT=/var/www/static
+        - PG_NAME=django
+        - PG_PASSWORD='django'
+      # networks:
+      #   - pulsar    
+      volumes:
+        - static:/var/www/static
+      ports:
+        - 8001:8001   
+      extra_hosts:
+        - "host.docker.internal:host-gateway"     
+
+
+ 
+  # pulsar:
+  #   image: apachepulsar/pulsar:latest
+  #   command: bin/pulsar standalone --bookie-enabled
+  #   hostname: pulsar
+  #   container_name: pulsar
+  #   ports:
+  #     - "8080:8080"
+  #     - "6650:6650"
+  #   restart: always
+  #   volumes:
+  #     - "./data:/pulsar/data"
+  # dashboard:
+  #   image: apachepulsar/pulsar-manager:latest
+  #   ports:
+  #     - "9527:9527"
+  #     - "7750:7750"
+  #   container_name: dashboard
+  #   depends_on:
+  #     - pulsar
+  #   links:
+  #     - pulsar
+  #   environment:
+  #     SPRING_CONFIGURATION_FILE: /pulsar-manager/pulsar-manager/application.properties
+    
