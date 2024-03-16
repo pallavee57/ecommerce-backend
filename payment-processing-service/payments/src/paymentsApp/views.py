@@ -40,7 +40,7 @@ def razorpay_callback(request):
             store_payment_details = ''' INSERT INTO payment_processing.payment_details (order_id, status, payment_id, created_at, modified_at) VALUES(%s,%s,%s,%s,%s) '''
             cursor = connection.cursor()
             cursor.execute(store_payment_details, (0, "Failed", 0,
-                                                   today, today))
+                                                   date.today().strftime("%b-%d-%Y"), date.today().strftime("%b-%d-%Y")))
 
             error_status = {
                 'error_code': code,

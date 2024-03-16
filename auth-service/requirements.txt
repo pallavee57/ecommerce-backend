@@ -3,4 +3,3 @@ djangorestframework
 djangorestframework-simplejwt
 markdown
 gunicorn
-psycopg2-binary

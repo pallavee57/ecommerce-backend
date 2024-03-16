@@ -33,7 +33,7 @@ class PulsarConsumer:
                 cursor = connection.cursor()
                 cursor.execute(register_order, (1, message["amount"], message["today"],
                             message["today"], message["razor_order_id"]))                
-                self.client.close()
+                # self.client.close()
                 return JsonResponse({"message": "Message Stored Successfully"})
 
             except Exception as e:

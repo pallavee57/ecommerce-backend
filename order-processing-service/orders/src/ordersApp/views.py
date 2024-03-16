@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from urllib3 import HTTPResponse
 import logging
 from .pulsar_mq.pulsar_producer import PulsarProducer
+from django.core.cache import cache
 
 
 def clean_lists(lst_of_dicts):
@@ -27,29 +28,36 @@ def clean_lists(lst_of_dicts):
 
 @csrf_exempt
 def getProducts(request):
+    lst_of_dicts = None
     logger = logging.getLogger("logger")
     message = "Showing Logs"
     logger.info(message)
-
-    if (request.method == "POST"):
-        getting_products = ''' select p.image, p.id, p.name, p.description, p.sku, p.price,p.modified_at, pc."name" as cat_name, pi2.quantity as stock, d.name as discount_package, d.discount_percent 
-                            from product_management.products p
-                            inner join product_management.product_category pc on pc.id = p.category_id 
-                            inner join product_management.product_inventory pi2 on pi2.id  = p.inventory_id 
-                            inner join product_management.discount d  on d.id = p.discount_id '''
-        cursor = connection.cursor()
-        cursor.execute(getting_products)
-        columns = [col[0] for col in cursor.description]
-        lst_of_dicts = [
-            dict(zip(columns, row))
-            for row in cursor.fetchall()
-        ]
-        logger = logging.getLogger("logger")
-        message = json.dumps(lst_of_dicts, indent=4,
-                             sort_keys=True, default=str)
-        logger.info(message)
-
-        return JsonResponse({"resp": lst_of_dicts}, status=200)
+    cache_key = "all_products"
+    lst_of_dicts = cache.get(key=cache_key)
+    if lst_of_dicts is None:
+        if (request.method == "POST"):
+            getting_products = ''' select p.image, p.id, p.name, p.description, p.sku, p.price,p.modified_at, pc."name" as cat_name, pi2.quantity as stock, d.name as discount_package, d.discount_percent 
+                                from product_management.products p
+                                inner join product_management.product_category pc on pc.id = p.category_id 
+                                inner join product_management.product_inventory pi2 on pi2.id  = p.inventory_id 
+                                inner join product_management.discount d  on d.id = p.discount_id '''
+            cursor = connection.cursor()
+            cursor.execute(getting_products)
+            columns = [col[0] for col in cursor.description]
+            lst_of_dicts = [
+                dict(zip(columns, row))
+                for row in cursor.fetchall()
+            ]
+            logger = logging.getLogger("logger")
+            message = json.dumps(lst_of_dicts, indent=4,
+                                 sort_keys=True, default=str)
+            logger.info(message)
+            cache.set(
+                key=cache_key,
+                value=lst_of_dicts,
+                timeout=60 * 2,  # in seconds (900s or 15min)
+            )
+    return JsonResponse({"resp": lst_of_dicts}, status=200)
 
 
 @csrf_exempt
@@ -117,9 +125,8 @@ def razorpay_order(request):
                 "merchantId": "rzp_test_t0LPta6Aht96fl"
             }
 
-            logger.info("data",data)
+            logger.info("data", data)
 
             return JsonResponse({"resp": data}, status=200)
     except Exception as e:
         print(e)
-

@@ -3,3 +3,5 @@ https://www.geeksforgeeks.org/message-queues-system-design/
 https://www.geeksforgeeks.org/caching-system-design-concept-for-beginners/
 https://alpha2phi.medium.com/apache-pulsar-development-setup-bbdc82314cf
 docker run -it -p 6650:6650 -p 8080:8080 apachepulsar/pulsar:latest bin/pulsar standalone
+https://www.freecodecamp.org/news/how-to-find-and-fix-security-vulnerabilities-using-snyk
+docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:latest
