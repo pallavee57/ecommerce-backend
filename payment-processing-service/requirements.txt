@@ -6,3 +6,5 @@ gunicorn
 razorpay
 django-cors-headers
 django-redis
+django_crontab
+python-crontab

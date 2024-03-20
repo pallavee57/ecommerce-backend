@@ -1,6 +1,7 @@
 import ast
 from datetime import date
 import json
+from .orders_connection import create_pulsarConn
 import razorpay
 from django.conf import settings
 from django.db import connection
@@ -9,7 +10,6 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from urllib3 import HTTPResponse
 import logging
-from .pulsar_mq.pulsar_producer import PulsarProducer
 from django.core.cache import cache
 
 
@@ -31,9 +31,10 @@ def getProducts(request):
     lst_of_dicts = None
     logger = logging.getLogger("logger")
     message = "Showing Logs"
-    logger.info(message)
+
     cache_key = "all_products"
     lst_of_dicts = cache.get(key=cache_key)
+    logger.info( lst_of_dicts)
     if lst_of_dicts is None:
         if (request.method == "POST"):
             getting_products = ''' select p.image, p.id, p.name, p.description, p.sku, p.price,p.modified_at, pc."name" as cat_name, pi2.quantity as stock, d.name as discount_package, d.discount_percent 
@@ -92,12 +93,13 @@ client = razorpay.Client(
 @csrf_exempt
 def razorpay_order(request):
     logger = logging.getLogger("logger")
-    message = ast.literal_eval(request.body.decode())
-    logger.info(message)
+   
+   
     try:
         if (request.method == "POST"):
             amount = ast.literal_eval(request.body.decode())["amount"]
             productId = ast.literal_eval(request.body.decode())["product_id"]
+            
             data = {
                 'amount': amount * 100,
                 'currency': "INR",
@@ -108,13 +110,21 @@ def razorpay_order(request):
             producer_data = {
                 "amount": amount,
                 "today": today,
-                "razor_order_id": razorpay_order["id"]
+                "razor_order_id": razorpay_order["id"],
+                "productId":productId
             }
             jsonFormat = json.dumps(producer_data)
-            producer = PulsarProducer(
-                'pulsar://192.168.225.205:6650', "initial_order_shipping_process")
+            producer = create_pulsarConn(
+                'pulsar://192.168.225.205:6650', "initial_order_shipping_process", "produce")
+           
+          
+            print("jsonFormat", jsonFormat)
+            
 
-            producer.send_message(jsonFormat)
+            producer.send_async(jsonFormat.encode('utf-8'),None)
+            producer.flush()
+  
+
 
             data = {
                 "name": "Pallavi",
@@ -125,8 +135,71 @@ def razorpay_order(request):
                 "merchantId": "rzp_test_t0LPta6Aht96fl"
             }
 
-            logger.info("data", data)
+            print(data)
 
             return JsonResponse({"resp": data}, status=200)
+    except Exception as e:
+        print(e)
+
+
+@csrf_exempt
+def get_products_by_id(request):
+    logger = logging.getLogger("logger")
+    try:
+        if (request.method == "POST"):
+
+            productId = ast.literal_eval(request.body.decode())["productId"]
+            print(tuple(productId))
+            getting_products = '''  select p.image, p.id, p.name, p.description, p.sku, p.price,p.modified_at, pc."name" as cat_name, pi2.quantity as stock, d.name as discount_package, d.discount_percent 
+                            from product_management.products p
+                            inner join product_management.product_category pc on pc.id = p.category_id 
+                            inner join product_management.product_inventory pi2 on pi2.id  = p.inventory_id 
+                            inner join product_management.discount d  on d.id = p.discount_id
+                            where p.id in %s '''
+            cursor = connection.cursor()
+            cursor.execute(getting_products, (tuple(productId),))
+            columns = [col[0] for col in cursor.description]
+            lst_of_dicts = [
+                dict(zip(columns, row))
+                for row in cursor.fetchall()
+            ]
+
+
+        return JsonResponse({"resp": lst_of_dicts}, status=200)
+    except Exception as e:
+        print(e)        
+
+@csrf_exempt
+def get_people_also_bought(request):
+    logger = logging.getLogger("logger")
+
+    
+   
+   
+    try:
+        if (request.method == "POST"):
+            productId = ast.literal_eval(request.body.decode())["productId"]
+            print(type(productId))
+            getting_products = '''with CTE as (select oi.order_id from order_processing.order_items oi where oi.product_id in %s)
+                                    select distinct(p.id),  p.image,  p.name, p.description, p.sku, p.price,p.modified_at, pc."name" as cat_name, pi2.quantity as stock, d.name as discount_package, d.discount_percent   from order_processing.order_details od 
+                                    join order_processing.order_items oi on oi.order_id = od.razor_pay_order_id 
+                                    join product_management.products p on oi.product_id = p.id
+                                    inner join product_management.product_category pc on pc.id = p.category_id 
+                                    inner join product_management.product_inventory pi2 on pi2.id  = p.inventory_id 
+                                    inner join product_management.discount d  on d.id = p.discount_id
+                                    where od.razor_pay_order_id in (select * from CTE) and p.id not in %s'''
+            cursor = connection.cursor()
+            cursor.execute(getting_products, [tuple(productId),tuple(productId)])
+            columns = [col[0] for col in cursor.description]
+            lst_of_dicts = [
+                dict(zip(columns, row))
+                for row in cursor.fetchall()
+            ]
+
+        
+            return JsonResponse({"resp": lst_of_dicts}, status=200)
+
+
+            # return JsonResponse({"resp": data}, status=200)
     except Exception as e:
         print(e)

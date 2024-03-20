@@ -40,7 +40,7 @@ services:
 
   payment-processing-service:
       build: ./payment-processing-service
-      command: gunicorn payments.wsgi --bind 0.0.0.0:8001
+      command: gunicorn payments.wsgi --bind 0.0.0.0:8001 
       environment:
         - FORCE_SCRIPT_NAME=/payments
         - STATIC_ROOT=/var/www/static
@@ -55,8 +55,9 @@ services:
       extra_hosts:
         - "host.docker.internal:host-gateway"     
 
-
- 
+  cron:
+    build: ./email_service/email_service  # same as main application 
+    # command: crond -f 
   # pulsar:
   #   image: apachepulsar/pulsar:latest
   #   command: bin/pulsar standalone --bookie-enabled

@@ -12,6 +12,10 @@ RUN pip install psycopg2-binary
 RUN pip install pulsar-client==3.4.0
 RUN pip install -r requirements.txt
 
+
 COPY payments/src /code/
-# RUN ln -sf /dev/stdout /code/logs/app.log
+COPY payments/manage.py /code/manage.py
+
 EXPOSE 8001
+
+ 

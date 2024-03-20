@@ -4,7 +4,7 @@ services:
     build: .
     image: payments_logify:latest
     container_name: payments_logify
-    command: gunicorn payments.wsgi --bind 0.0.0.0:8001
+    command: gunicorn payments.wsgi --bind 0.0.0.0:8001 
     environment:
       - FORCE_SCRIPT_NAME=/orders
       - STATIC_ROOT=/var/www/static

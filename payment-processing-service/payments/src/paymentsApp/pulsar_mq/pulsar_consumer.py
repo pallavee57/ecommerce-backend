@@ -9,11 +9,14 @@ import random
 import string
 import logging
 
+from email_service.email_service.crons.email_connection import create_pulsarConn
+
 
 class PulsarConsumer:
-    client = Client('pulsar://192.168.225.205:6650',message_listener_threads=10)
+    client = create_pulsarConn(
+        'pulsar://192.168.225.205:6650', "produce_email_queue")
     consumer = client.subscribe(
-            'initial_order_shipping_process','initial_order_shipping_process',consumer_type=pulsar.ConsumerType.Shared) 
+            'initial_order_shipping_process_1','initial_order_shipping_process_1',consumer_type=pulsar.ConsumerType.Shared) 
 
     def generate_custom_id(self):
         timestamp = str(int(time.time()))
