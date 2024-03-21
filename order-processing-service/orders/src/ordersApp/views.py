@@ -172,10 +172,6 @@ def get_products_by_id(request):
 @csrf_exempt
 def get_people_also_bought(request):
     logger = logging.getLogger("logger")
-
-    
-   
-   
     try:
         if (request.method == "POST"):
             productId = ast.literal_eval(request.body.decode())["productId"]

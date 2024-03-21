@@ -57,7 +57,7 @@ services:
 
   cron:
     build: ./email_service/email_service  # same as main application 
-    # command: crond -f 
+ 
   # pulsar:
   #   image: apachepulsar/pulsar:latest
   #   command: bin/pulsar standalone --bookie-enabled
